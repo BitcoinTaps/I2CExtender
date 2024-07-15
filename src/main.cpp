@@ -43,7 +43,23 @@
 
 int servoPin = 0;
 int relayPin = 0;
+int tickPin = 0;
 Servo myservo;
+
+bool isPinAllowed(int pin) {
+  switch ( pin ) {
+    case PB1:
+      return true;
+      break;
+    case PB3:
+      return true;
+      break;
+    case PB4:
+      return true;
+      break;
+  }
+  return false;
+}
 
 void receiveEvent(int n) {
   uint8_t cmd = Wire.read();
@@ -58,7 +74,7 @@ void receiveEvent(int n) {
       }
       break;
     case SERVO_ATTACH:
-      {
+      if ( isPinAllowed(arg) ) {
         servoPin = arg;
         myservo.attach(servoPin);
       }
@@ -70,13 +86,24 @@ void receiveEvent(int n) {
       }
       break;
     case RELAY_ATTACH:
-      {
+      if ( isPinAllowed(arg) ) {
         relayPin = arg;
         pinMode(relayPin,OUTPUT);
       }
     case RELAY_DETACH:
       {
         relayPin = 0;
+      }
+      break;
+    case TICK_ATTACH:
+      if ( isPinAllowed(arg) ) {
+        tickPin = arg;
+        pinMode(tickPin,INPUT);
+      }
+      break;
+    case TICK_DETACH:
+      {
+        tickPin = 0;
       }
       break;
     case RELAY_HIGH:
@@ -97,7 +124,7 @@ void receiveEvent(int n) {
 void setup() {
   Wire.begin(21);
   Wire.onReceive(receiveEvent);
-  delay(1000);
+  delay(2000);
 }
 
 void loop() {
