@@ -38,46 +38,51 @@
 #define RELAY_HIGH   0x26
 #define RELAY_LOW    0x27
 
-#define TICK_ATTACH  0x28
-#define TICK_DETACH  0x29
+volatile byte myArray[10];
+volatile bool flag = false;
 
 int servoPin = 0;
 int relayPin = 0;
-int tickPin = 0;
 Servo myservo;
 
+void handleEvent();
+
 bool isPinAllowed(int pin) {
-  switch ( pin ) {
-    case PB1:
-      return true;
-      break;
-    case PB3:
-      return true;
-      break;
-    case PB4:
-      return true;
-      break;
-  }
-  return false;
+  return true;
+  // switch ( pin ) {
+  //   case PB1:
+  //     return true;
+  //     break;
+  //   case PB3:
+  //     return true;
+  //     break;
+  //   case PB4:
+  //     return true;
+  //     break;
+  // }
+  // return false;
 }
 
 void receiveEvent(int n) {
-  uint8_t cmd = Wire.read();
-  uint8_t arg = Wire.read();
+  for(int i=0; i<n; i++)
+  {
+    myArray[i] = Wire.read();
+  }
+  flag = true;
+}
 
-  switch ( cmd ) {
+void handleEvent() {
+  switch ( myArray[0] ) {
     case SERVO_ANGLE:
       {
-        if ( servoPin != 0 ) {
-          myservo.write(arg);        
-        }
+        //if ( servoPin != 0 ) {
+          myservo.write(myArray[1]);        
+        //}
       }
       break;
     case SERVO_ATTACH:
-      if ( isPinAllowed(arg) ) {
-        servoPin = arg;
-        myservo.attach(servoPin);
-      }
+      servoPin = myArray[1];
+      myservo.attach(myArray[1]);
       break;
     case SERVO_DETACH:
       {
@@ -86,24 +91,14 @@ void receiveEvent(int n) {
       }
       break;
     case RELAY_ATTACH:
-      if ( isPinAllowed(arg) ) {
-        relayPin = arg;
+      if ( isPinAllowed(myArray[1]) ) {
+        relayPin = myArray[1];
         pinMode(relayPin,OUTPUT);
       }
+      break;
     case RELAY_DETACH:
       {
         relayPin = 0;
-      }
-      break;
-    case TICK_ATTACH:
-      if ( isPinAllowed(arg) ) {
-        tickPin = arg;
-        pinMode(tickPin,INPUT);
-      }
-      break;
-    case TICK_DETACH:
-      {
-        tickPin = 0;
       }
       break;
     case RELAY_HIGH:
@@ -119,13 +114,25 @@ void receiveEvent(int n) {
     default:
       break;
   }
+
 }
 
 void setup() {
+  // myservo.attach(4);
+  // for(int i=0;(i<5);i++) {
+  //   myservo.write(0);
+  //   delay(500);
+  //   myservo.write(30);
+  //   delay(500);
+  // }
+
   Wire.begin(21);
   Wire.onReceive(receiveEvent);
-  delay(2000);
 }
 
 void loop() {
+  if ( flag == true ) {
+    handleEvent();
+    flag = false;
+  }
 }
